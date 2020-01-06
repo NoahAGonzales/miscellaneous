@@ -6,7 +6,7 @@ app = Flask(__name__)
 api = Api (app)
 
 class PlaylistDuplicateFinder(Resource):
-   def post(self):
+   def put(self): # Put is needed to accept a url as input.
       try:
          inputs.url(request.form['url'])
       except ValueError as e:
