@@ -10,10 +10,10 @@ An API for my personal site
       * Chomedriver-Binary
       * Flask
       * Flask-RESTful
-#### To Run:
+#### To Test:
    1. Execute ```python api.py``` in project directory to start local server
    2. Navigate to project directory in a separate window
    3. Execute ```curl http://localhost:5000/playlistDup -d "url=<Insert the spotify playlist url>" -X PUT```
 
 ## Future
-* Access from my personal site
+* Access from my personal site (Deployment is costly and cannot be afforded at this time)
