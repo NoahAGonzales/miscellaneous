@@ -5,8 +5,6 @@
 # If the value supplied for workingPath is already in the path, it will be removed as part of the cleanup for this script
 # To avoid credential handling, you must already be logged into instagram on Google Chrome
 
-# .\instagramCollectionDownload\download.ps1 "C:\Users\noaha\Downloads\miscellaneous\instagramCollectionDownload" "https://www.instagram.com/noahagonzo/saved/todo/17874368231545673/" "C:\Users\noaha\Downloads\miscellaneous\instagramCollectionDownload\instagram_noahagonzo.xml" 
-
 param(
     # The working directory containing chromedriver.exe and WebDriver.dll
     [Parameter(Mandatory=$true)]$workingPath,
@@ -33,6 +31,7 @@ Add-Type -Path "$($workingPath)\WebDriver.dll"
 
 # Create a new ChromeDriver Object instance.
 $ChromeDriver = New-Object OpenQA.Selenium.Chrome.ChromeDriver
+$ChromeDriver.manage().Window.maximize()
 
 # Get credentials
 $credentials = Import-Clixml $credentialsPath
@@ -61,19 +60,32 @@ foreach ($URL in $collectionURLs) {
     $ChromeDriver.Navigate().GoToURL($URL)
     Start-Sleep -seconds $loadWaitTime
 
-    # Get Collection linkssa
-    $collectionLinks = $ChromeDriver.FindElements([OpenQA.Selenium.By]::CssSelector("a"))
-    $postLinks = @()
-    # Get post links from collection links
-    foreach ($element in $collectionLinks) {
-        if ($element.getAttribute("href") -like "*instagram.com/p/*") {
-            $postLinks += $element.getAttribute("href")
+    $postLinks = @{}
+
+    #  Capture links and then scroll down to load videos
+    $body = $ChromeDriver.findElement([OpenQA.Selenium.By]::CssSelector("body"))
+    for ($i=0;$i -lt 20;$i++) {
+
+        # Get Collection links
+        if ($debug) {"DEBUG: Getting collection links"}
+        $collectionLinks = $ChromeDriver.FindElements([OpenQA.Selenium.By]::CssSelector("a"))
+        # Get post links from collection links
+        foreach ($element in $collectionLinks) {
+            #$element.getAttribute("href") | Write-Output
+            if ($element.getAttribute("href") -like "*instagram.com/p/*" ) {
+                $postLinks[$element.getAttribute("href")] = $true
+            }
         }
+
+        # Scroll
+        if ($debug) {"DEBUG: Scrolling down x$i"}
+        $ChromeDriver.ExecuteScript("window.scrollBy(0,1000)")
+        Start-Sleep -seconds $loadWaitTime
     }
 
     # Output post links
     '' + $postLinks.Count + " posts to download:" | Write-Output
-    $postLinks | Write-Output
+    $postLinks.Keys | Write-Output
     "---" | Write-Output
 
     # Go to download site
@@ -87,7 +99,7 @@ foreach ($URL in $collectionURLs) {
     Start-Sleep -seconds $actionWaitTime
 
     # Download each post
-    foreach ($postLink in $postLinks) {
+    foreach ($postLink in $postLinks.keys) {
         # Enter link
         if ($debug) {"DEBUG: Entering post link"}
         $urlTextField = $ChromeDriver.FindElement([OpenQA.Selenium.By]::Id("url"))
